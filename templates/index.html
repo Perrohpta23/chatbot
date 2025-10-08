@@ -1,83 +1,155 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Chat IA</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    /* Mini estilos para el sidebar */
+    #layout { display: grid; grid-template-columns: 240px 1fr; height: 100vh; gap: 0; }
+    #sidebar { background:#161616; border-right:1px solid #333; padding:10px; display:flex; flex-direction:column; }
+    #conv-list { flex:1; overflow-y:auto; margin-top:8px; }
+    .conv-item { padding:8px; border-radius:8px; cursor:pointer; margin-bottom:6px; background:#242424; }
+    .conv-item.active { outline:2px solid #2196f3; }
+    .conv-actions { display:flex; gap:6px; margin-top:6px; }
+    #main { display:flex; flex-direction:column; }
+  </style>
 </head>
 <body>
-  <div id="chat-container">
-    <div id="chat-box"></div>
+<div id="layout">
+  <aside id="sidebar">
+    <button id="new-chat">➕ Nuevo chat</button>
+    <div id="conv-list"></div>
+  </aside>
 
-    <div id="input-area">
-      <input type="text" id="user-input" placeholder="Escriba algo..." autocomplete="off">
-      <button id="send-btn">Enviar</button>
-      <button id="new-chat-btn" title="Nuevo chat">🗑️</button>
+  <main id="main">
+    <div id="chat-container">
+      <div id="chat-box"></div>
+      <div id="input-area">
+        <input type="text" id="user-input" placeholder="Escriba algo..." autocomplete="off">
+        <button id="send-btn">Enviar</button>
+      </div>
     </div>
-  </div>
+  </main>
+</div>
 
-  <script>
-    const input = document.getElementById("user-input");
-    const chatBox = document.getElementById("chat-box");
-    const sendBtn = document.getElementById("send-btn");
-    const newChatBtn = document.getElementById("new-chat-btn");
+<script>
+  const chatBox = document.getElementById("chat-box");
+  const input = document.getElementById("user-input");
+  const sendBtn = document.getElementById("send-btn");
+  const newBtn = document.getElementById("new-chat");
+  const convListEl = document.getElementById("conv-list");
 
-    let conversationId = localStorage.getItem("conversation_id") || null;
+  let currentConversationId = null;
 
-    function addMessage(sender, text) {
-      const msg = document.createElement("p");
-      msg.classList.add(sender);
-      msg.textContent = text;
-      chatBox.appendChild(msg);
-      chatBox.scrollTop = chatBox.scrollHeight;
+  function addMessage(sender, text) {
+    const msg = document.createElement("p");
+    msg.classList.add(sender);
+    msg.textContent = text;
+    chatBox.appendChild(msg);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  async function loadConversations() {
+    const res = await fetch("/conversations");
+    const convs = await res.json();
+    convListEl.innerHTML = "";
+    convs.forEach(c => {
+      const div = document.createElement("div");
+      div.className = "conv-item" + (c.id === currentConversationId ? " active" : "");
+      div.textContent = c.title;
+      div.onclick = async () => { 
+        currentConversationId = c.id; 
+        await loadHistory(); 
+        await loadConversations(); 
+      };
+
+      // Acciones: renombrar / borrar
+      const actions = document.createElement("div");
+      actions.className = "conv-actions";
+      const renameBtn = document.createElement("button");
+      renameBtn.textContent = "Renombrar";
+      renameBtn.onclick = async (e)=>{
+        e.stopPropagation();
+        const title = prompt("Nuevo título:", c.title || "Chat");
+        if (!title) return;
+        await fetch(`/conversations/${c.id}`, {
+          method:"PATCH", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({ title })
+        });
+        loadConversations();
+      };
+
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "Borrar";
+      delBtn.onclick = async (e)=>{
+        e.stopPropagation();
+        if (!confirm("¿Borrar conversación?")) return;
+        await fetch(`/conversations/${c.id}`, { method:"DELETE" });
+        if (currentConversationId === c.id) {
+          currentConversationId = null;
+          chatBox.innerHTML = "";
+        }
+        loadConversations();
+      };
+
+      actions.appendChild(renameBtn);
+      actions.appendChild(delBtn);
+      div.appendChild(actions);
+      convListEl.appendChild(div);
+    });
+  }
+
+  async function loadHistory() {
+    if (!currentConversationId) return;
+    const res = await fetch(`/history?conversation_id=${currentConversationId}`);
+    if (!res.ok) return;
+    const history = await res.json();
+    chatBox.innerHTML = "";
+    history.forEach(m => {
+      addMessage(m.role === "user" ? "user" : "bot", (m.role === "user" ? "🧍‍♂️ " : "🤖 ") + m.content);
+    });
+  }
+
+  sendBtn.onclick = async () => {
+    const message = input.value.trim();
+    if (!message) return;
+    addMessage("user", "🧍‍♂️ " + message);
+    input.value = "";
+
+    const res = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify({ message, conversation_id: currentConversationId })
+    });
+    const data = await res.json();
+    if (!currentConversationId) {
+      currentConversationId = data.conversation_id;
+      loadConversations();
     }
+    if (data.reply) addMessage("bot", "🤖 " + data.reply);
+    else addMessage("bot", "🤖 Error procesando el mensaje");
+  };
 
-    async function loadHistory() {
-      if (!conversationId) return;
-      const res = await fetch(`/history?conversation_id=${conversationId}`);
-      if (!res.ok) return;
-      const history = await res.json();
-      chatBox.innerHTML = "";
-      for (const m of history) {
-        addMessage(m.role === "user" ? "user" : "bot", (m.role === "user" ? "🧍‍♂️ " : "🤖 ") + m.content);
-      }
-    }
+  newBtn.onclick = async () => {
+    const res = await fetch("/conversations", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ title: "Nuevo chat" })
+    });
+    const data = await res.json();
+    currentConversationId = data.id;
+    chatBox.innerHTML = "";
+    await loadConversations();
+  };
 
-    sendBtn.onclick = async () => {
-      const message = input.value.trim();
-      if (!message) return;
+  // Enter para enviar
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendBtn.click();
+  });
 
-      addMessage("user", "🧍‍♂️ " + message);
-      input.value = "";
-
-      const response = await fetch("/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, conversation_id: conversationId })
-      });
-
-      const data = await response.json();
-
-      if (data.conversation_id && !conversationId) {
-        conversationId = data.conversation_id;
-        localStorage.setItem("conversation_id", conversationId);
-      }
-
-      if (data.reply) addMessage("bot", "🤖 " + data.reply);
-      else addMessage("bot", "🤖 Error procesando el mensaje");
-    };
-
-    newChatBtn.onclick = () => {
-      // Arranca una conversación nueva
-      localStorage.removeItem("conversation_id");
-      conversationId = null;
-      chatBox.innerHTML = "";
-      addMessage("bot", "🤖 Nuevo chat iniciado.");
-    };
-
-    // Cargue historial si ya había conversación
-    loadHistory();
-  </script>
+  // Cargar lista al inicio
+  loadConversations();
+</script>
 </body>
 </html>
