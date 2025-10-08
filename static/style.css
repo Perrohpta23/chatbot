@@ -70,3 +70,48 @@ body {
 #send-btn:hover {
     background-color: #1976d2;
 }
+
+
+#layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    height: 100vh;
+    gap: 0;
+}
+
+#sidebar {
+    background: #161616;
+    border-right: 1px solid #333;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+#conv-list {
+    flex: 1;
+    overflow-y: auto;
+    margin-top: 8px;
+}
+
+.conv-item {
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 6px;
+    background: #242424;
+}
+
+.conv-item.active {
+    outline: 2px solid #2196f3;
+}
+
+.conv-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+#main {
+    display: flex;
+    flex-direction: column;
+}
