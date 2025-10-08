@@ -1,50 +1,83 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat IA</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chat IA</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div id="chat-container">
-        <div id="chat-box"></div>
+  <div id="chat-container">
+    <div id="chat-box"></div>
 
-        <div id="input-area">
-            <input type="text" id="user-input" placeholder="Escribe algo..." autocomplete="off">
-            <button id="send-btn">Enviar</button>
-        </div>
+    <div id="input-area">
+      <input type="text" id="user-input" placeholder="Escriba algo..." autocomplete="off">
+      <button id="send-btn">Enviar</button>
+      <button id="new-chat-btn" title="Nuevo chat">🗑️</button>
     </div>
+  </div>
 
-    <script>
-        const input = document.getElementById("user-input");
-        const chatBox = document.getElementById("chat-box");
-        const sendBtn = document.getElementById("send-btn");
+  <script>
+    const input = document.getElementById("user-input");
+    const chatBox = document.getElementById("chat-box");
+    const sendBtn = document.getElementById("send-btn");
+    const newChatBtn = document.getElementById("new-chat-btn");
 
-        function addMessage(sender, text) {
-            const msg = document.createElement("p");
-            msg.classList.add(sender);
-            msg.textContent = text;
-            chatBox.appendChild(msg);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
+    let conversationId = localStorage.getItem("conversation_id") || null;
 
-        sendBtn.onclick = async () => {
-            const message = input.value.trim();
-            if (!message) return;
+    function addMessage(sender, text) {
+      const msg = document.createElement("p");
+      msg.classList.add(sender);
+      msg.textContent = text;
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
 
-            addMessage("user", "🧍‍♂️ " + message);
-            input.value = "";
+    async function loadHistory() {
+      if (!conversationId) return;
+      const res = await fetch(`/history?conversation_id=${conversationId}`);
+      if (!res.ok) return;
+      const history = await res.json();
+      chatBox.innerHTML = "";
+      for (const m of history) {
+        addMessage(m.role === "user" ? "user" : "bot", (m.role === "user" ? "🧍‍♂️ " : "🤖 ") + m.content);
+      }
+    }
 
-            const response = await fetch("/chat", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message })
-            });
+    sendBtn.onclick = async () => {
+      const message = input.value.trim();
+      if (!message) return;
 
-            const data = await response.json();
-            addMessage("bot", "🤖 " + data.reply);
-        };
-    </script>
+      addMessage("user", "🧍‍♂️ " + message);
+      input.value = "";
+
+      const response = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, conversation_id: conversationId })
+      });
+
+      const data = await response.json();
+
+      if (data.conversation_id && !conversationId) {
+        conversationId = data.conversation_id;
+        localStorage.setItem("conversation_id", conversationId);
+      }
+
+      if (data.reply) addMessage("bot", "🤖 " + data.reply);
+      else addMessage("bot", "🤖 Error procesando el mensaje");
+    };
+
+    newChatBtn.onclick = () => {
+      // Arranca una conversación nueva
+      localStorage.removeItem("conversation_id");
+      conversationId = null;
+      chatBox.innerHTML = "";
+      addMessage("bot", "🤖 Nuevo chat iniciado.");
+    };
+
+    // Cargue historial si ya había conversación
+    loadHistory();
+  </script>
 </body>
 </html>
