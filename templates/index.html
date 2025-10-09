@@ -122,7 +122,7 @@
       chatBox.innerHTML = "";
       history.forEach(m => {
         addMessage(m.role === "user" ? "user" : "bot",
-          (m.role === "user" ? "🧍‍♂️ " : "🤖 ") + m.content);
+          (m.role === "user" ? "" : " • ") + m.content);
       });
     }
 
@@ -131,7 +131,7 @@
       if (!message) return;
 
       // UI
-      addMessage("user", "🧍‍♂️ " + message);
+      addMessage("user", "" + message);
       input.value = "";
       sendBtn.disabled = true;
 
@@ -146,9 +146,9 @@
           currentConversationId = data.conversation_id;
           loadConversations();
         }
-        addMessage("bot", "🤖 " + (data.reply || "Error procesando el mensaje"));
+        addMessage("bot", " • " + (data.reply || "Error procesando el mensaje"));
       } catch (e) {
-        addMessage("bot", "🤖 Error de red.");
+        addMessage("bot", " • Error de red.");
       } finally {
         sendBtn.disabled = false;
         input.focus();
