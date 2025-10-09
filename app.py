@@ -14,8 +14,6 @@ app.config["SQLALCHEMY_DATABASE_URI"] = DB_URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
-print(f"💾 Usando BD en: {DB_PATH}")
-
 client = OpenAI()
 
 class User(db.Model):
