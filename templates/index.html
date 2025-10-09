@@ -77,25 +77,28 @@
     let currentConversationId = null;
 
     function addMessage(sender, text) {
-      const msg = document.createElement("div");
-      msg.classList.add(sender, "msg");
+      // fila contenedora para alinear izquierda/derecha
+      const row = document.createElement("div");
+      row.className = "row " + sender; // 'row user' o 'row bot'
 
-      // si usa DOMPurify (recomendado)
-      const safe = DOMPurify.sanitize(text, {USE_PROFILES: {html: true}});
-      msg.innerHTML = safe;
+      // burbuja
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
 
-      chatBox.appendChild(msg);
+      // sanee y ponga HTML (Markdown/LaTeX del bot)
+      const safe = DOMPurify.sanitize(text, { USE_PROFILES: { html: true } });
+      bubble.innerHTML = safe;
 
-      // 🔥 Desplazamiento suave al final
+      row.appendChild(bubble);
+      chatBox.appendChild(row);
+
+      // scroll suave
       chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: "smooth" });
 
-      // Renderiza ecuaciones LaTeX
-      if (window.MathJax?.typesetPromise) {
-        MathJax.typesetPromise([msg]).catch(console.error);
+      // Render LaTeX SOLO para mensajes del bot
+      if (sender === "bot" && window.MathJax?.typesetPromise) {
+        MathJax.typesetPromise([bubble]).catch(console.error);
       }
-
-      // si quiere copiar bloques de código
-      if (typeof enhanceCodeBlocks === "function") enhanceCodeBlocks(msg);
     }
 
     function enhanceCodeBlocks(scope = document) {

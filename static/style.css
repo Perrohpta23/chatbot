@@ -129,21 +129,61 @@ body.collapsed #sidebar{
 }
 
 /* Mensajes */
-#chat-box p{
-  margin: 10px 0;
-  padding: 8px 12px;
-  border-radius: 10px;
-  line-height: 1.35;
+/* Contenedor del chat (ya lo tenía) */
+#chat-box{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.user{
-  background: #424242;
-  align-self: flex-end;
-  text-align: left;
+/* Fila de cada mensaje */
+#chat-box .row{
+  display: flex;
+  width: 100%;
 }
 
-.bot{
-  align-self: flex-start;
+/* Alineación por rol */
+#chat-box .row.user{ justify-content: flex-end; }
+#chat-box .row.bot{  justify-content: flex-start; }
+
+/* Burbuja */
+#chat-box .bubble{
+  max-width: min(720px, 90%);
+  background: #3a3a3a;           /* base bot */
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 16px;
+  line-height: 1.45;
+  box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  border: 1px solid var(--border);
+  overflow-x: auto;               /* por si hay ecuaciones/ancho */
+}
+
+/* Burbuja del usuario */
+#chat-box .row.user .bubble{
+  background: var(--green);
+  color: #fff;
+}
+
+/* Listas/markdown dentro de la burbuja */
+#chat-box .bubble p{ margin: 8px 0; }
+#chat-box .bubble ul, 
+#chat-box .bubble ol{ margin: 8px 0 8px 22px; }
+#chat-box .bubble code, 
+#chat-box .bubble pre{
+  background: #232323;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+#chat-box .bubble pre{
+  padding: 10px;
+  overflow-x: auto;
+}
+
+/* MathJax sin romper el layout */
+#chat-box .bubble .mjx-container{
+  overflow-x: auto;
+  padding: 2px 0;
 }
 
 /* Input pegado abajo y a lo ancho */
@@ -175,23 +215,6 @@ body.collapsed #sidebar{
   cursor: pointer;
 }
 #send-btn:disabled{ opacity: .6; cursor: not-allowed; }
-
-/* Fórmulas en bloque quepan y hagan scroll si es largo */
-#chat-box .mjx-container { overflow-x: auto; }
-
-/* Mensajes con Markdown */
-#chat-box .msg p { margin: 10px 0; }
-#chat-box .msg code, #chat-box .msg pre {
-  background: #0f0f0f; border: 1px solid var(--border);
-  border-radius: 8px; padding: 4px 6px; overflow-x: auto;
-}
-#chat-box .msg pre { padding: 10px; }
-
-/* Hace que las ecuaciones no se corten ni rompan el layout */
-#chat-box .mjx-container {
-  overflow-x: auto;
-  padding: 4px 0;
-}
 
 /* Responsive pequeño: sidebar oculta por defecto */
 @media (max-width: 900px){
