@@ -6,17 +6,18 @@
   <title>Chat IA</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <!-- MathJax v3: TeX -> HTML -->
-<script>
-  window.MathJax = {
-    tex: {
-      inlineMath: [['\\(','\\)'], ['$', '$']],   // soporta \( \) y $ $
-      displayMath: [['\\[','\\]'], ['$$','$$']]  // soporta \[ \] y $$ $$
-    },
-    options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
-  };
-</script>
-<script async id="mathjax-script"
-  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(','\\)'], ['$', '$']],   // soporta \( \) y $ $
+        displayMath: [['\\[','\\]'], ['$$','$$']]  // soporta \[ \] y $$ $$
+      },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+    };
+  </script>
+  <script async id="mathjax-script"
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
 
 </head>
 <body>
@@ -51,14 +52,17 @@
   <script>
     function addMessage(sender, text) {
       const msg = document.createElement("div");
-      msg.classList.add(sender, "msg");
-      // Convertir Markdown a HTML (cuidado con XSS: marked.parse ya sanea básico)
-      msg.innerHTML = marked.parse(text);
+      msg.classList.add(sender);
+
+      // Limpie el HTML de la respuesta antes de inyectar
+      const safe = DOMPurify.sanitize(text, {USE_PROFILES: {html: true}});
+      msg.innerHTML = safe;
+
       chatBox.appendChild(msg);
       chatBox.scrollTop = chatBox.scrollHeight;
 
-      if (window.MathJax && MathJax.typesetPromise) {
-        MathJax.typesetPromise([msg]).catch(err => console.error(err));
+      if (window.MathJax?.typesetPromise) {
+        MathJax.typesetPromise([msg]).catch(console.error);
       }
     }
 
@@ -74,21 +78,57 @@
 
     function addMessage(sender, text) {
       const msg = document.createElement("div");
-      msg.classList.add(sender);
-      msg.innerHTML = text; // ahora dejamos HTML para que MathJax lea las expresiones
-      chatBox.appendChild(msg);
-      chatBox.scrollTop = chatBox.scrollHeight;
+      msg.classList.add(sender, "msg");
 
-      // 🔥 Renderiza las expresiones nuevas
-      if (window.MathJax && MathJax.typesetPromise) {
-        MathJax.typesetPromise([msg]).catch(err => console.error(err));
+      // si usa DOMPurify (recomendado)
+      const safe = DOMPurify.sanitize(text, {USE_PROFILES: {html: true}});
+      msg.innerHTML = safe;
+
+      chatBox.appendChild(msg);
+
+      // 🔥 Desplazamiento suave al final
+      chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: "smooth" });
+
+      // Renderiza ecuaciones LaTeX
+      if (window.MathJax?.typesetPromise) {
+        MathJax.typesetPromise([msg]).catch(console.error);
       }
+
+      // si quiere copiar bloques de código
+      if (typeof enhanceCodeBlocks === "function") enhanceCodeBlocks(msg);
     }
 
+    function enhanceCodeBlocks(scope = document) {
+      scope.querySelectorAll("pre > code").forEach(code => {
+        if (code.parentElement.classList.contains("has-copy")) return;
+        const pre = code.parentElement;
+        pre.classList.add("has-copy");
+        const btn = document.createElement("button");
+        btn.textContent = "Copiar";
+        btn.style.cssText = "position:absolute;top:8px;right:8px;padding:4px 8px;border:1px solid var(--border);background:#2a2a2a;color:#fff;border-radius:6px;cursor:pointer;";
+        const wrap = document.createElement("div");
+        wrap.style.position = "relative";
+        pre.replaceWith(wrap);
+        wrap.appendChild(pre);
+        wrap.appendChild(btn);
+        btn.onclick = async () => {
+          await navigator.clipboard.writeText(code.innerText);
+          btn.textContent = "Copiado ✓";
+          setTimeout(()=>btn.textContent="Copiar",1200);
+        };
+      });
+    }
+
+
     // Mostrar/ocultar sidebar
+    if (localStorage.getItem("sidebar_collapsed") === "1") {
+      document.body.classList.add("collapsed");
+    }
+
     toggleBtn.onclick = () => {
       document.body.classList.toggle("collapsed");
-      // después de colapsar, asegurar que el chat siga al fondo
+      const v = document.body.classList.contains("collapsed") ? "1" : "0";
+      localStorage.setItem("sidebar_collapsed", v);
       setTimeout(() => chatBox.scrollTop = chatBox.scrollHeight, 0);
     };
 
@@ -155,6 +195,7 @@
         addMessage(m.role === "user" ? "user" : "bot",
           (m.role === "user" ? "" : " • ") + m.content);
       });
+      chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: "smooth" });
     }
 
     sendBtn.onclick = async () => {
