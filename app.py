@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 from openai import OpenAI
 
@@ -11,7 +11,6 @@ db = SQLAlchemy(app)
 
 client = OpenAI()
 
-# ---------- MODELOS ----------
 class User(db.Model):
     id = db.Column(db.String, primary_key=True)  # UUID en cookie
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -20,15 +19,17 @@ class Conversation(db.Model):
     id = db.Column(db.String, primary_key=True)  # UUID
     user_id = db.Column(db.String, db.ForeignKey("user.id"), index=True, nullable=False)
     title = db.Column(db.String, default="Nuevo chat")
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    from datetime import datetime, timezone
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     conversation_id = db.Column(db.String, db.ForeignKey("conversation.id"), index=True, nullable=False)
     role = db.Column(db.String, nullable=False)  # 'user' | 'assistant' | 'system'
     content = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
 with app.app_context():
     db.create_all()
