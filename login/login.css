@@ -1,0 +1,73 @@
+/* ===== Base ===== */
+:root {
+    --bg: #121212;
+    --panel: #1e1e1e;
+    --panel2: #161616;
+    --border: #2a2a2a;
+    --text: #ffffff;
+    --muted: #bdbdbd;
+    --primary: #2196f3;
+    --sidebar-w: 280px;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+}
+
+.container {
+    gap: 0;
+    background-color: var(--bg);
+    height: 100vh;
+    width: 100%;
+    position: absolute;
+    align-items: center;
+}
+
+.container .form-box {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--panel2);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+    align-items: center;
+    text-align: center;
+    margin: 20%;
+    position: sticky;
+    border-radius: 20px;
+}
+
+input {
+    flex: 1;
+    margin: 10px;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 16px;
+}
+
+button {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 12px;
+  margin: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+p{
+    margin: 10px 0;
+    padding: 10px 0;
+}
+
+a {
+    color: var(--primary);
+}
+
+a:hover {
+    color: #994bff;
+}
