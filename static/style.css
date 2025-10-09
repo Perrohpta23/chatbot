@@ -139,7 +139,7 @@ body.collapsed #sidebar{
 .user{
   background: #424242;
   align-self: flex-end;
-  text-align: right;
+  text-align: left;
 }
 
 .bot{
