@@ -187,6 +187,12 @@ body.collapsed #sidebar{
 }
 #chat-box .msg pre { padding: 10px; }
 
+/* Hace que las ecuaciones no se corten ni rompan el layout */
+#chat-box .mjx-container {
+  overflow-x: auto;
+  padding: 4px 0;
+}
+
 /* Responsive pequeño: sidebar oculta por defecto */
 @media (max-width: 900px){
   body:not(.collapsed) #layout{ grid-template-columns: var(--sidebar-w) 1fr; }

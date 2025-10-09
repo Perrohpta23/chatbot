@@ -73,12 +73,16 @@
     let currentConversationId = null;
 
     function addMessage(sender, text) {
-      const msg = document.createElement("p");
+      const msg = document.createElement("div");
       msg.classList.add(sender);
-      msg.textContent = text;
+      msg.innerHTML = text; // ahora dejamos HTML para que MathJax lea las expresiones
       chatBox.appendChild(msg);
-      // scrollear siempre al final
       chatBox.scrollTop = chatBox.scrollHeight;
+
+      // 🔥 Renderiza las expresiones nuevas
+      if (window.MathJax && MathJax.typesetPromise) {
+        MathJax.typesetPromise([msg]).catch(err => console.error(err));
+      }
     }
 
     // Mostrar/ocultar sidebar
