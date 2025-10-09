@@ -26,7 +26,6 @@ class Conversation(db.Model):
     id = db.Column(db.String, primary_key=True)  # UUID
     user_id = db.Column(db.String, db.ForeignKey("user.id"), index=True, nullable=False)
     title = db.Column(db.String, default="Nuevo chat")
-    from datetime import datetime, timezone
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
@@ -91,7 +90,7 @@ def rename_conversation(conv_id):
     conv = Conversation.query.filter_by(id=conv_id, user_id=user_id).first_or_404()
     new_title = (request.json or {}).get("title", "").strip() or conv.title
     conv.title = new_title
-    conv.updated_at = datetime.utcnow()
+    conv.updated_at = datetime.now(timezone.utc)
     db.session.commit()
     return jsonify({"ok": True})
 
@@ -146,12 +145,15 @@ def chat():
     db.session.commit()
 
     # LLM
-    response = client.chat.completions.create(model="gpt-4o-mini", messages=messages)
-    reply = response.choices[0].message.content
+    try:
+        response = client.chat.completions.create(model="gpt-4o-mini", messages=messages)
+        reply = response.choices[0].message.content
+    except Exception as e:
+        reply = "La IA no está disponible en este momento. Intente de nuevo mas tarde."
 
     # Guardar respuesta
     db.session.add(Message(conversation_id=conversation_id, role="assistant", content=reply))
-    conv.updated_at = datetime.utcnow()
+    conv.updated_at = datetime.now(timezone.utc)
     db.session.commit()
 
     # Primer título bonito (si sigue en "Nuevo chat")
