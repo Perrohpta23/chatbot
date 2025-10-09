@@ -10,6 +10,9 @@
   --sidebar-w: 280px;
 }
 
+#outline {
+    background-color: var(--text);
+}
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body {
@@ -39,7 +42,7 @@ body {
   display: grid;
   grid-template-columns: var(--sidebar-w) 1fr;
   gap: 0;
-  height: 100vh; /* ocupa toda la pantalla */
+  height: 90vh; /* ocupa toda la pantalla */
 }
 
 /* Cuando está colapsado, la sidebar desaparece y el main ocupa todo */
@@ -66,6 +69,13 @@ body.collapsed #sidebar{
   justify-content: space-between;
   gap: 8px;
 }
+.sidebar-header p {
+    margin: 2px;
+    padding-right: 3px;
+}
+.sidebar-header h2 {
+    margin-top: 50px;
+}
 #new-chat{
   background: var(--panel);
   color: var(--text);
@@ -73,7 +83,10 @@ body.collapsed #sidebar{
   padding: 6px 10px;
   border-radius: 8px;
   cursor: pointer;
+  display: flex;
+  justify-content: center;
 }
+
 #conv-list{
   margin-top: 10px;
   height: calc(100vh - 70px);
@@ -190,7 +203,6 @@ body.collapsed #sidebar{
 #input-area{
   position: sticky;  /* se queda pegado al fondo del contenedor */
   bottom: 0;
-  margin-top: 10px;
   display: flex;
   gap: 10px;
   background: var(--bg); /* fondo para separar del chat */
@@ -211,13 +223,19 @@ body.collapsed #sidebar{
   border: none;
   padding: 12px 16px;
   border-radius: 10px;
-  font-size: 16px;
   cursor: pointer;
 }
 #send-btn:disabled{ opacity: .6; cursor: not-allowed; }
+
+.icon {
+    width: 15px
+}
 
 /* Responsive pequeño: sidebar oculta por defecto */
 @media (max-width: 900px){
   body:not(.collapsed) #layout{ grid-template-columns: var(--sidebar-w) 1fr; }
   body.collapsed #layout{ grid-template-columns: 0 1fr; }
+  #chat-box {padding: 10px;}
+  #sidebar {position: absolute; z-index: 5; max-height: 110%;}
+  #chat-container {position: absolute; z-index: 1; }
 }
