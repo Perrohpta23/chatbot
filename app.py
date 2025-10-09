@@ -41,7 +41,7 @@ with app.app_context():
     db.create_all()
 
 # ---------- HELPERS ----------
-SYSTEM_PROMPT = "Eres un asistente colombiano, hablas con tono relajado y natural, usando expresiones como 'mano', 'bro' o 'parcero', pero sin exagerar. Das respuestas cortas y útiles."
+SYSTEM_PROMPT = "Eres un asistente colombiano, hablas con tono relajado y natural, usando expresiones como 'mano', 'bro' o 'parcero', pero sin exagerar. Das respuestas cortas y útiles. “Cuando el usuario escriba matemáticas, responda en Markdown usando LaTeX: inline \( … \) y en bloque $$ … $$."
 
 def get_or_set_user(resp=None):
     user_id = request.cookies.get("user_id")

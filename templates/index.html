@@ -5,6 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Chat IA</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <!-- MathJax v3: TeX -> HTML -->
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['\\(','\\)'], ['$', '$']],   // soporta \( \) y $ $
+      displayMath: [['\\[','\\]'], ['$$','$$']]  // soporta \[ \] y $$ $$
+    },
+    options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+  };
+</script>
+<script async id="mathjax-script"
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
 </head>
 <body>
   <!-- Botón para mostrar/ocultar la sidebar -->
@@ -33,8 +46,22 @@
       </div>
     </main>
   </div>
-
+  <!-- Marked (parser Markdown) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
+    function addMessage(sender, text) {
+      const msg = document.createElement("div");
+      msg.classList.add(sender, "msg");
+      // Convertir Markdown a HTML (cuidado con XSS: marked.parse ya sanea básico)
+      msg.innerHTML = marked.parse(text);
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      if (window.MathJax && MathJax.typesetPromise) {
+        MathJax.typesetPromise([msg]).catch(err => console.error(err));
+      }
+    }
+
     // --------- UI helpers ---------
     const chatBox = document.getElementById("chat-box");
     const input = document.getElementById("user-input");
