@@ -18,7 +18,7 @@ client = OpenAI()
 
 class User(db.Model):
     id = db.Column(db.String, primary_key=True)  # UUID en cookie
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
 class Conversation(db.Model):
     id = db.Column(db.String, primary_key=True)  # UUID

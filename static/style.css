@@ -225,7 +225,7 @@ body.collapsed #sidebar{
   padding: 12px 16px;
   border-radius: 10px;
   cursor: pointer;
-  
+
 }
 #send-btn:disabled{ opacity: .6; cursor: not-allowed; }
 
@@ -235,9 +235,9 @@ body.collapsed #sidebar{
 
 /* Responsive pequeño: sidebar oculta por defecto */
 @media (max-width: 900px){
-  body:not(.collapsed) #layout{ grid-template-columns: var(--sidebar-w) 1fr; }
+  body:not(.collapsed) #layout{ grid-template-columns: var(--sidebar-w) 1fr; justify-items: center;}
   body.collapsed #layout{ grid-template-columns: 0 1fr; }
   #chat-box {padding: 10px;}
   #sidebar {position: absolute; z-index: 5; max-height: 110%;}
-  #chat-container {position: absolute; z-index: 1; }
+  #chat-container {position: absolute; z-index: 1;}
 }
