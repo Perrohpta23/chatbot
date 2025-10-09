@@ -1,13 +1,20 @@
+import os
 from flask import Flask, render_template, request, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone
 from uuid import uuid4
 from openai import OpenAI
 
+BASEDIR = os.path.abspath(os.path.dirname(__file__))
+DB_PATH = os.path.join(BASEDIR, "chat.db")
+DB_URI = "sqlite:///" + DB_PATH
+
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///chat.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = DB_URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
+
+print(f"💾 Usando BD en: {DB_PATH}")
 
 client = OpenAI()
 
