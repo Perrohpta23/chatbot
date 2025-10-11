@@ -5,98 +5,97 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Void IA</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
   <!-- MathJax v3: TeX -> HTML -->
   <script>
     window.MathJax = {
       tex: {
-        inlineMath: [['\\(','\\)'], ['$', '$']],   // soporta \( \) y $ $
-        displayMath: [['\\[','\\]'], ['$$','$$']]  // soporta \[ \] y $$ $$
+        inlineMath: [['\\(','\\)'], ['$', '$']],
+        displayMath: [['\\[','\\]'], ['$$','$$']]
       },
       options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
     };
   </script>
   <script async id="mathjax-script"
     src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+  <!-- Seguridad y Markdown -->
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    marked.use({ mangle: false, headerIds: false, smartypants: false });
+  </script>
 
 </head>
-<body>
+
+<body class="app">
   <!-- Botón para mostrar/ocultar la sidebar -->
   <button id="toggle-sidebar" title="Mostrar/ocultar chats">☰</button>
 
   <div id="layout">
     <!-- Sidebar -->
     <aside id="sidebar">
-      <div class="sidebar-header">
-        <h2>Chats</h2>
-        <button id="new-chat"> <p>Nuevo chat </p>
-          <svg width="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M21.2799 6.40005L11.7399 15.94C10.7899 16.89 7.96987 17.33 7.33987 16.7C6.70987 16.07 7.13987 13.25 8.08987 12.3L17.6399 2.75002C17.8754 2.49308 18.1605 2.28654 18.4781 2.14284C18.7956 1.99914 19.139 1.92124 19.4875 1.9139C19.8359 1.90657 20.1823 1.96991 20.5056 2.10012C20.8289 2.23033 21.1225 2.42473 21.3686 2.67153C21.6147 2.91833 21.8083 3.21243 21.9376 3.53609C22.0669 3.85976 22.1294 4.20626 22.1211 4.55471C22.1128 4.90316 22.0339 5.24635 21.8894 5.5635C21.7448 5.88065 21.5375 6.16524 21.2799 6.40005V6.40005Z" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M11 4H6C4.93913 4 3.92178 4.42142 3.17163 5.17157C2.42149 5.92172 2 6.93913 2 8V18C2 19.0609 2.42149 20.0783 3.17163 20.8284C3.92178 21.5786 4.93913 22 6 22H17C19.21 22 20 20.2 20 18V13" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
+      <header class="sidebar-header">
+        <button id="new-chat">Nuevo chat 
+          <div></div><svg width="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M21.2799 6.40005L11.7399 15.94C10.7899 16.89 7.96987 17.33 7.33987 16.7C6.70987 16.07 7.13987 13.25 8.08987 12.3L17.6399 2.75002C17.8754 2.49308 18.1605 2.28654 18.4781 2.14284C18.7956 1.99914 19.139 1.92124 19.4875 1.9139C19.8359 1.90657 20.1823 1.96991 20.5056 2.10012C20.8289 2.23033 21.1225 2.42473 21.3686 2.67153C21.6147 2.91833 21.8083 3.21243 21.9376 3.53609C22.0669 3.85976 22.1294 4.20626 22.1211 4.55471C22.1128 4.90316 22.0339 5.24635 21.8894 5.5635C21.7448 5.88065 21.5375 6.16524 21.2799 6.40005V6.40005Z" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M11 4H6C4.93913 4 3.92178 4.42142 3.17163 5.17157C2.42149 5.92172 2 6.93913 2 8V18C2 19.0609 2.42149 20.0783 3.17163 20.8284C3.92178 21.5786 4.93913 22 6 22H17C19.21 22 20 20.2 20 18V13" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
         </button>
-      </div>
-      <div id="conv-list"></div>
+      </header>
+      <nav id="conv-list"></nav>
+      <footer class="sidebar-footer"></footer>
     </aside>
+
     <!-- Área principal -->
     <main id="main">
       <div id="chat-container">
         <div id="chat-box"></div>
-        <!-- Input fijo al fondo y de ancho completo -->
         <div id="input-area">
           <input type="text" id="user-input" placeholder="Pregunta lo que quieras" autocomplete="off">
-          <button id="send-btn"><svg width="1" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" id="send-alt" class="icon glyph" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M21.88,4.73,16.2,20.65A2,2,0,0,1,14.3,22h0a2,2,0,0,1-1.9-1.31l-2.12-5.52,1.54-1.54,2.49-2.49a1,1,0,1,0-1.42-1.42l-2.49,2.49L8.82,13.76,3.31,11.63a2,2,0,0,1,0-3.83L19.27,2.12a2,2,0,0,1,2.61,2.61Z" style="fill:#ffffff"></path></g></svg></button>
+          <button id="send-btn" title="Enviar">
+            <svg width="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
+                 id="send-alt" class="icon glyph" fill="#000000">
+              <path d="M21.88,4.73,16.2,20.65A2,2,0,0,1,14.3,22h0a2,2,0,0,1-1.9-1.31l-2.12-5.52,1.54-1.54,2.49-2.49a1,1,0,1,0-1.42-1.42l-2.49,2.49L8.82,13.76,3.31,11.63a2,2,0,0,1,0-3.83L19.27,2.12a2,2,0,0,1,2.61,2.61Z" style="fill:#ffffff"/>
+            </svg>
+          </button>
         </div>
       </div>
     </main>
   </div>
-  <!-- Marked (parser Markdown) -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
   <script>
-    function addMessage(sender, text) {
-      const msg = document.createElement("div");
-      msg.classList.add(sender);
-
-      // Limpie el HTML de la respuesta antes de inyectar
-      const safe = DOMPurify.sanitize(text, {USE_PROFILES: {html: true}});
-      msg.innerHTML = safe;
-
-      chatBox.appendChild(msg);
-      chatBox.scrollTop = chatBox.scrollHeight;
-
-      if (window.MathJax?.typesetPromise) {
-        MathJax.typesetPromise([msg]).catch(console.error);
-      }
-    }
-
-    // --------- UI helpers ---------
     const chatBox = document.getElementById("chat-box");
     const input = document.getElementById("user-input");
     const sendBtn = document.getElementById("send-btn");
     const newBtn = document.getElementById("new-chat");
     const convListEl = document.getElementById("conv-list");
     const toggleBtn = document.getElementById("toggle-sidebar");
-
     let currentConversationId = null;
 
-    function addMessage(sender, text) {
-      // fila contenedora para alinear izquierda/derecha
-      const row = document.createElement("div");
-      row.className = "row " + sender; // 'row user' o 'row bot'
+    function renderMarkdownWithMath(text) {
+      // protege delimitadores LaTeX para que marked no los coma
+      const preserved = text
+        .replace(/\\\(/g, '\\\\(')
+        .replace(/\\\)/g, '\\\\)')
+        .replace(/\\\[/g, '\\\\[')
+        .replace(/\\\]/g, '\\\\]');
 
-      // burbuja
+      const html = marked.parse(preserved);
+      return DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+    }
+
+
+    function addMessage(sender, text, { typeset = true } = {}) {
+      const row = document.createElement("div");
+      row.className = "row " + sender;
+
       const bubble = document.createElement("div");
       bubble.className = "bubble";
 
-      // sanee y ponga HTML (Markdown/LaTeX del bot)
-      const safe = DOMPurify.sanitize(text, { USE_PROFILES: { html: true } });
-      bubble.innerHTML = safe;
-
+      bubble.innerHTML = renderMarkdownWithMath(text);
       row.appendChild(bubble);
       chatBox.appendChild(row);
-
-      // scroll suave
       chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: "smooth" });
 
-      // Render LaTeX SOLO para mensajes del bot
-      if (sender === "bot" && window.MathJax?.typesetPromise) {
+      if (typeset && window.MathJax?.typesetPromise) {
         MathJax.typesetPromise([bubble]).catch(console.error);
       }
     }
@@ -108,9 +107,9 @@
         pre.classList.add("has-copy");
         const btn = document.createElement("button");
         btn.textContent = "Copiar";
-        btn.style.cssText = "position:absolute;top:8px;right:8px;padding:4px 8px;border:1px solid var(--border);background:#2a2a2a;color:#fff;border-radius:6px;cursor:pointer;";
+        btn.className = "copy-btn";
         const wrap = document.createElement("div");
-        wrap.style.position = "relative";
+        wrap.className = "code-wrap";
         pre.replaceWith(wrap);
         wrap.appendChild(pre);
         wrap.appendChild(btn);
@@ -122,70 +121,84 @@
       });
     }
 
-
     // Mostrar/ocultar sidebar
     if (localStorage.getItem("sidebar_collapsed") === "1") {
       document.body.classList.add("collapsed");
     }
-
     toggleBtn.onclick = () => {
       document.body.classList.toggle("collapsed");
-      const v = document.body.classList.contains("collapsed") ? "1" : "0";
-      localStorage.setItem("sidebar_collapsed", v);
+      localStorage.setItem("sidebar_collapsed",
+        document.body.classList.contains("collapsed") ? "1" : "0");
       setTimeout(() => chatBox.scrollTop = chatBox.scrollHeight, 0);
     };
 
+    /* =========================
+      Conversaciones (CRUD)
+      ========================= */
+
     async function loadConversations() {
-      const res = await fetch("/conversations");
-      const convs = await res.json();
-      convListEl.innerHTML = "";
+      const res = await fetch('/conversations');
+      const data = await res.json();
+      renderConversations(data);
+    }
 
-      convs.forEach(c => {
-        const div = document.createElement("div");
-        div.className = "conv-item" + (c.id === currentConversationId ? " active" : "");
-        div.textContent = c.title || "Chat";
-        div.onclick = async () => {
-          currentConversationId = c.id;
-          await loadHistory();
-          await loadConversations();
-        };
+    function esc(s){ return (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
 
-        const row = document.createElement("div");
-        row.className = "conv-actions";
-        const renameBtn = document.createElement("button");
-        renameBtn.innerHTML = '<svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M20.1498 7.93997L8.27978 19.81C7.21978 20.88 4.04977 21.3699 3.32977 20.6599C2.60977 19.9499 3.11978 16.78 4.17978 15.71L16.0498 3.84C16.5979 3.31801 17.3283 3.03097 18.0851 3.04019C18.842 3.04942 19.5652 3.35418 20.1004 3.88938C20.6356 4.42457 20.9403 5.14781 20.9496 5.90463C20.9588 6.66146 20.6718 7.39189 20.1498 7.93997V7.93997Z" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>';
-        renameBtn.title = "Renombrar";
-        renameBtn.onclick = async (e) => {
-          e.stopPropagation();
-          const title = prompt("Nuevo título:", c.title || "Chat");
-          if (!title) return;
-          await fetch(`/conversations/${c.id}`, {
-            method: "PATCH",
-            headers: {"Content-Type":"application/json"},
-            body: JSON.stringify({ title })
-          });
-          loadConversations();
-        };
+    function renderConversations(list){
+      convListEl.innerHTML = list.map(c => `
+        <div class="conv ${c.id===currentConversationId?'active':''}" data-id="${c.id}">
+          <span class="conv-title" title="${esc(c.title||'Nuevo chat')}">${esc(c.title||'Nuevo chat')}</span>
+          <span class="actions">
+            <button class="rename" data-action="rename" title="Renombrar">
+              <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M20.1498 7.93997L8.27978 19.81C7.21978 20.88 4.04977 21.3699 3.32977 20.6599C2.60977 19.9499 3.11978 16.78 4.17978 15.71L16.0498 3.84C16.5979 3.31801 17.3283 3.03097 18.0851 3.04019C18.842 3.04942 19.5652 3.35418 20.1004 3.88938C20.6356 4.42457 20.9403 5.14781 20.9496 5.90463C20.9588 6.66146 20.6718 7.39189 20.1498 7.93997V7.93997Z" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
+            </button>
+            <button class="delete" data-action="delete" title="Borrar">
+              <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M20.5001 6H3.5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path> <path d="M18.8332 8.5L18.3732 15.3991C18.1962 18.054 18.1077 19.3815 17.2427 20.1907C16.3777 21 15.0473 21 12.3865 21H11.6132C8.95235 21 7.62195 21 6.75694 20.1907C5.89194 19.3815 5.80344 18.054 5.62644 15.3991L5.1665 8.5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path> <path d="M9.1709 4C9.58273 2.83481 10.694 2 12.0002 2C13.3064 2 14.4177 2.83481 14.8295 4" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path> </g></svg>
+            </button>
+          </span>
+        </div>
+      `).join('');
+    }
 
-        const delBtn = document.createElement("button");
-        delBtn.innerHTML = '<svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M20.5001 6H3.5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path> <path d="M18.8332 8.5L18.3732 15.3991C18.1962 18.054 18.1077 19.3815 17.2427 20.1907C16.3777 21 15.0473 21 12.3865 21H11.6132C8.95235 21 7.62195 21 6.75694 20.1907C5.89194 19.3815 5.80344 18.054 5.62644 15.3991L5.1665 8.5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path> <path d="M9.1709 4C9.58273 2.83481 10.694 2 12.0002 2C13.3064 2 14.4177 2.83481 14.8295 4" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path> </g></svg>';
-        delBtn.title = "Borrar";
-        delBtn.onclick = async (e) => {
-          e.stopPropagation();
-          if (!confirm("¿Borrar conversación?")) return;
-          await fetch(`/conversations/${c.id}`, { method:"DELETE" });
-          if (currentConversationId === c.id) {
-            currentConversationId = null;
-            chatBox.innerHTML = "";
-          }
-          loadConversations();
-        };
+    /* Delegación de eventos: abrir / renombrar / borrar */
+    convListEl.addEventListener('click', async (e) => {
+      const item = e.target.closest('.conv');
+      if (!item) return;
+      const id = item.dataset.id;
+      const act = e.target.closest('[data-action]')?.dataset.action;
 
-        row.appendChild(renameBtn);
-        row.appendChild(delBtn);
-        div.appendChild(row);
-        convListEl.appendChild(div);
-      });
+      if (!act) {
+        // click en el item: abrir
+        currentConversationId = id;
+        document.querySelectorAll('.conv').forEach(x => x.classList.toggle('active', x===item));
+        await loadHistory();
+        return;
+      }
+
+      if (act === 'delete') {
+        if (!confirm('¿Borrar esta conversación?')) return;
+        await fetch(`/conversations/${id}`, { method: 'DELETE' });
+        if (currentConversationId === id) { currentConversationId = null; chatBox.innerHTML=''; }
+        await loadConversations();
+        return;
+      }
+
+      if (act === 'rename') {
+        const actual = item.querySelector('.conv-title').textContent.trim();
+        const nuevo = prompt('Nuevo título:', actual);
+        if (!nuevo || !nuevo.trim()) return;
+        await fetch(`/conversations/${id}`, {
+          method:'PATCH',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ title: nuevo.trim() })
+        });
+        await loadConversations();
+      }
+    });
+
+    async function openConversation(id) {
+      currentConversationId = id;
+      await loadHistory();
     }
 
     async function loadHistory() {
@@ -194,49 +207,12 @@
       if (!res.ok) return;
       const history = await res.json();
       chatBox.innerHTML = "";
-      history.forEach(m => {
-        addMessage(m.role === "user" ? "user" : "bot",
-          (m.role === "user" ? "" : "") + m.content);
-      });
+      history.forEach(m => addMessage(m.role === "user" ? "user" : "bot", m.content));
+      enhanceCodeBlocks(chatBox);
       chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: "smooth" });
     }
 
-    sendBtn.onclick = async () => {
-      const message = input.value.trim();
-      if (!message) return;
-
-      // UI
-      addMessage("user", "" + message);
-      input.value = "";
-      sendBtn.disabled = true;
-
-      try {
-        const res = await fetch("/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message, conversation_id: currentConversationId })
-        });
-        const data = await res.json();
-        if (!currentConversationId && data.conversation_id) {
-          currentConversationId = data.conversation_id;
-          loadConversations();
-        }
-        addMessage("bot", " • " + (data.reply || "Error procesando el mensaje"));
-      } catch (e) {
-        addMessage("bot", " • Error de red.");
-      } finally {
-        sendBtn.disabled = false;
-        input.focus();
-      }
-    };
-
-    // Enter para enviar
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") sendBtn.click();
-    });
-
-    // Crear nuevo chat
-    newBtn.onclick = async () => {
+    async function createNewConversation() {
       const res = await fetch("/conversations", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
@@ -246,9 +222,76 @@
       currentConversationId = data.id;
       chatBox.innerHTML = "";
       await loadConversations();
+      // activar el nuevo
+      const el = [...document.querySelectorAll('.conv')].find(x => x.dataset.id === currentConversationId);
+      if (el) el.classList.add('active');
+    }
+
+    // Botón + Nuevo
+    newBtn.onclick = createNewConversation;
+
+    // Atajo: Ctrl+N para nuevo chat
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        createNewConversation();
+      }
+    });
+
+    /* =========================
+      Envío de mensajes
+      ========================= */
+    sendBtn.onclick = async () => {
+      const message = input.value.trim();
+      if (!message) return;
+      sendBtn.disabled = true;
+
+      addMessage("user", message);
+      const thinkRow = document.createElement("div");
+      thinkRow.className = "row bot";
+      const thinkBubble = document.createElement("div");
+      thinkBubble.className = "bubble thinking";
+      thinkBubble.textContent = "Void está pensando...";
+      thinkRow.appendChild(thinkBubble);
+      chatBox.appendChild(thinkRow);
+      chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: "smooth" });
+
+      try {
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message, conversation_id: currentConversationId })
+        });
+        const data = await res.json();
+
+        thinkRow.remove();
+
+        if (!currentConversationId && data.conversation_id) {
+          currentConversationId = data.conversation_id;
+          await loadConversations();
+          const el = [...document.querySelectorAll('.conv')].find(x => x.dataset.id === currentConversationId);
+          if (el) el.classList.add('active');
+        }
+
+        addMessage("bot", data.reply || "Error procesando el mensaje");
+        enhanceCodeBlocks(chatBox);
+
+      } catch (e) {
+        thinkRow.remove();
+        addMessage("bot", "Error de red.");
+        console.error(e);
+      } finally {
+        sendBtn.disabled = false;
+        input.value = "";
+        input.focus();
+      }
     };
 
-    // Cargar al inicio
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") sendBtn.click();
+    });
+
+    // Arranque
     loadConversations();
   </script>
 </body>

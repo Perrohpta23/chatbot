@@ -1,0 +1,5 @@
+Flask
+Flask-SQLAlchemy
+python-dotenv
+openai>=1.0.0
+Flask-Cors
