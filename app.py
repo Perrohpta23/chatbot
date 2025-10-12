@@ -88,6 +88,7 @@ SYSTEM_PROMPT = (
     "Eres un asistente carismático. Das respuestas útiles. "
     "Cuando el usuario escriba matemáticas, responde en Markdown usando LaTeX: "
     "inline \\( … \\) y en bloque $$ … $$."
+    "Si usas emojies, vas variandolos con cada respuesta si te parece adecuado. "
 )
 
 MAX_MSG_LEN = 4000  # aproximación simple

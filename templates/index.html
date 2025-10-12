@@ -26,24 +26,38 @@
       },
       options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
     };
-    document.addEventListener('DOMContentLoaded', () => hljs.configure({ignoreUnescapedHTML: true}));
+    document.addEventListener('DOMContentLoaded', () => hljs.configure({ ignoreUnescapedHTML: true }));
   </script>
   <script async id="mathjax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 </head>
 
 <body class="app">
-  <!-- Botón para colapsar sidebar -->
-  <button id="toggle-sidebar" title="Mostrar/ocultar chats">☰</button>
+  <!-- Banner superior -->
+  <header id="topbar">
+    <button id="toggle-sidebar" title="Mostrar/ocultar chats">☰</button>
+    <h1 class="brand">
+      <img src="{{ url_for('static', filename='Logo-void.ico') }}" alt="" class="brand-logo">
+      <span>Void AI</span>
+    </h1>
+    <div class="topbar-actions"></div>
+  </header>
 
   <div id="layout">
     <!-- Sidebar -->
     <aside id="sidebar">
       <header class="sidebar-header">
-        <button id="new-chat">Nuevo
-          <div></div>
-          <svg width="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.2799 6.40005L11.7399 15.94C10.7899 16.89 7.96987 17.33 7.33987 16.7C6.70987 16.07 7.13987 13.25 8.08987 12.3L17.6399 2.75002C17.8754 2.49308 18.1605 2.28654 18.4781 2.14284C18.7956 1.99914 19.139 1.92124 19.4875 1.9139C19.8359 1.90657 20.1823 1.96991 20.5056 2.10012C20.8289 2.23033 21.1225 2.42473 21.3686 2.67153C21.6147 2.91833 21.8083 3.21243 21.9376 3.53609C22.0669 3.85976 22.1294 4.20626 22.1211 4.55471C22.1128 4.90316 22.0339 5.24635 21.8894 5.5635C21.7448 5.88065 21.5375 6.16524 21.2799 6.40005Z" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M11 4H6C4.93913 4 3.92178 4.42142 3.17163 5.17157C2.42149 5.92172 2 6.93913 2 8V18C2 19.0609 2.42149 20.0783 3.17163 20.8284C3.92178 21.5786 4.93913 22 6 22H17C19.21 22 20 20.2 20 18V13" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <button id="new-chat" type="button" title="+ Nuevo chat">
+          <span>Nuevo</span>
+          <svg width="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+               xmlns="http://www.w3.org/2000/svg">
+            <path d="M21.28 6.4 11.74 15.94c-.95.95-3.77 1.39-4.4.76-.63-.63-.2-3.45.75-4.4L16.04 3.84a3.06 3.06 0 0 1 4.11 4.11Z"
+                  stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M11 4H6A4 4 0 0 0 2 8v10a4 4 0 0 0 4 4h11c2.21 0 3-1.8 3-4v-5"
+                  stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </button>
       </header>
+
       <nav id="conv-list"></nav>
       <footer class="sidebar-footer"></footer>
     </aside>
@@ -58,16 +72,17 @@
             <img src="{{ url_for('static', filename='Logo void transparente.png') }}" alt="Void">
             <p>Escribe tu pregunta o usa <b>{ }</b> para insertar código.</p>
           </div>
-          <!-- Spacer para que el input no tape el final -->
+          <!-- Spacer para que el input no tape el final (altura se ajusta vía JS) -->
           <div id="bottom-spacer"></div>
         </div>
 
         <div id="input-area">
           <input type="text" id="user-input" placeholder="Pregunta lo que quieras" autocomplete="off">
-          <button id="code-btn" title="Insertar código">{ }</button>
-          <button id="send-btn" title="Enviar">
-            <svg width="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" id="send-alt" class="icon glyph" fill="#ffffff">
-              <path d="M21.88,4.73,16.2,20.65A2,2,0,0,1,14.3,22h0a2,2,0,0,1-1.9-1.31l-2.12-5.52,1.54-1.54,2.49-2.49a1,1,0,1,0-1.42-1.42l-2.49,2.49L8.82,13.76,3.31,11.63a2,2,0,0,1,0-3.83L19.27,2.12a2,2,0,0,1,2.61,2.61Z"/>
+          <button id="code-btn" title="Insertar código" type="button">{ }</button>
+          <button id="send-btn" title="Enviar" type="button">
+            <svg width="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
+                 id="send-alt" class="icon glyph" fill="#ffffff" aria-hidden="true">
+              <path d="M21.88,4.73,16.2,20.65A2,2,0,0,1,14.3,22h0a2,2,0,0,1-1.9-1.31l-2.12-5.52 4.03-4.03a1,1,0,1,0-1.42-1.42l-4.03 4.03L3.31,11.63a2,2,0,0,1,0-3.83L19.27,2.12a2,2,0,0,1,2.61,2.61Z"/>
             </svg>
           </button>
         </div>
@@ -80,7 +95,7 @@
     <div class="modal-card">
       <header class="modal-header">
         <h3>Insertar bloque de código</h3>
-        <button class="modal-close" id="code-close">×</button>
+        <button class="modal-close" id="code-close" type="button">×</button>
       </header>
       <div class="modal-body">
         <label>Lenguaje
@@ -99,7 +114,7 @@
         <textarea id="code-text" rows="10" spellcheck="false" placeholder="Pegue o escriba su código aquí..."></textarea>
       </div>
       <footer class="modal-footer">
-        <button id="code-insert" class="primary">Insertar</button>
+        <button id="code-insert" class="primary" type="button">Insertar</button>
       </footer>
     </div>
   </div>
@@ -140,12 +155,9 @@
 
     // ====== responsive sidebar ======
     function applyResponsiveSidebar(){
-      if (window.innerWidth <= COLLAPSE_BP){
-        document.body.classList.add('collapsed');
-      } else {
-        const pref = localStorage.getItem("sidebar_collapsed") === "1";
-        document.body.classList.toggle('collapsed', pref);
-      }
+      const pref = localStorage.getItem("sidebar_collapsed"); // "1" | "0" | null
+      const shouldCollapse = pref !== null ? pref === "1" : (window.innerWidth <= COLLAPSE_BP);
+      document.body.classList.toggle('collapsed', shouldCollapse);
     }
     window.addEventListener('resize', applyResponsiveSidebar);
     applyResponsiveSidebar();
@@ -235,10 +247,16 @@
           <span class="conv-title" title="${esc(c.title||'Nuevo chat')}">${esc(c.title||'Nuevo chat')}</span>
           <span class="actions">
             <button class="rename" data-action="rename" title="Renombrar">
-              <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20.1498 7.93997L8.27978 19.81C7.21978 20.88 4.04977 21.3699 3.32977 20.6599C2.60977 19.9499 3.11978 16.78 4.17978 15.71L16.0498 3.84C16.5979 3.31801 17.3283 3.03097 18.0851 3.04019C18.842 3.04942 19.5652 3.35418 20.1004 3.88938C20.6356 4.42457 20.9403 5.14781 20.9496 5.90463C20.9588 6.66146 20.6718 7.39189 20.1498 7.93997Z" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>  
+              <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M20.15 7.94 8.28 19.81c-1.06 1.07-4.23 1.56-4.95.85-.72-.71-.21-3.88.85-4.95L16.05 3.84" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </button>
             <button class="delete" data-action="delete" title="Borrar">
-              <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20.5001 6H3.5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/><path d="M18.8332 8.5L18.3732 15.3991C18.1962 18.054 18.1077 19.3815 17.2427 20.1907C16.3777 21 15.0473 21 12.3865 21H11.6132C8.95235 21 7.62195 21 6.75694 20.1907C5.89194 19.3815 5.80344 18.054 5.62644 15.3991L5.1665 8.5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/><path d="M9.1709 4C9.58273 2.83481 10.694 2 12.0002 2C13.3064 2 14.4177 2.83481 14.8295 4" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/></svg>
+              <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M20.5 6H3.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M18.83 8.5 18.37 15.4c-.18 2.66-.27 3.99-1.13 4.8-.85.81-2.18.8-4.84.8h-.77c-2.66 0-3.99 0-4.86-.81-.87-.8-.96-2.14-1.13-4.79L5.17 8.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M9.17 4A3 3 0 0 1 12 2a3 3 0 0 1 2.83 2" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
             </button>
           </span>
         </div>`).join('');
@@ -260,7 +278,7 @@
         await fetch(`/conversations/${id}`, { method:'DELETE' });
         if (currentConversationId === id){
           currentConversationId = null;
-          clearChat();          // limpia mensajes y muestra placeholder
+          clearChat();   // muestra placeholder otra vez
         }
         await loadConversations();
         return;
@@ -284,7 +302,7 @@
       });
       const data = await res.json();
       currentConversationId = data.id;
-      clearChat();                 // placeholder visible hasta primer mensaje
+      clearChat();                 // placeholder visible hasta el primer mensaje
       await loadConversations();
       const el = [...document.querySelectorAll('.conv')].find(x => x.dataset.id === currentConversationId);
       if (el) el.classList.add('active');
