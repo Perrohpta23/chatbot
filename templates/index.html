@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0", view-fit="cover"/>
   <title>Void IA</title>
 
   <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
@@ -36,8 +36,8 @@
   <header id="topbar">
     <button id="toggle-sidebar" title="Mostrar/ocultar chats">☰</button>
     <h1 class="brand">
-      <img src="{{ url_for('static', filename='Logo-void.ico') }}" alt="" class="brand-logo">
       <span>Void AI</span>
+      <img src="{{ url_for('static', filename='Logo-void.ico') }}" alt="" class="brand-logo">
     </h1>
     <div class="topbar-actions"></div>
   </header>
@@ -46,7 +46,7 @@
     <!-- Sidebar -->
     <aside id="sidebar">
       <header class="sidebar-header">
-        <button id="new-chat" type="button" title="+ Nuevo chat">
+        <button id="new-chat" type="button" title="Nuevo chat">
           <span>Nuevo</span>
           <svg width="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"
                xmlns="http://www.w3.org/2000/svg">
@@ -142,6 +142,11 @@
     const COLLAPSE_BP = 1100;
     let currentConversationId = null;
 
+    function scrollToBottomSmooth() {
+      chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+    }
+
+
     // ====== helpers placeholder ======
     function updateChatEmpty(){
       const hasMsgs = !!chatBox.querySelector('.row');
@@ -206,7 +211,7 @@
       bubble.innerHTML = renderMarkdownWithMath(text);
       row.appendChild(bubble);
       chatBox.insertBefore(row, spacer);
-      chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: "smooth" });
+      requestAnimationFrame(() => requestAnimationFrame(scrollToBottomSmooth));
       enhanceCodeBlocks(bubble);
       if (typeset && window.MathJax?.typesetPromise) MathJax.typesetPromise([bubble]).catch(console.error);
     }
@@ -316,7 +321,7 @@
       const history = await res.json();
       clearChat();
       history.forEach(m => addMessage(m.role === "user" ? "user" : "bot", m.content));
-      chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: "smooth" });
+      scrollToBottomSmooth();
       syncComposerPadding();
       updateChatEmpty();
     }
@@ -339,7 +344,7 @@
       thinkBubble.textContent = "Void está pensando...";
       thinkRow.appendChild(thinkBubble);
       chatBox.insertBefore(thinkRow, spacer);
-      chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: "smooth" });
+      scrollToBottomSmooth();
 
       try {
         const res = await fetch("/chat", {
