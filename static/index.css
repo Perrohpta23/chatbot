@@ -206,15 +206,20 @@ body.collapsed #layout{ grid-template-columns: 0 1fr; }
   background: var(--bg);
   border-top:1px solid var(--border);
   padding:10px 16px;
+  height: fit-content;
 }
 #user-input{
-  flex:1;
+  flex: 1;
   padding:12px;
   border-radius:10px;
   border:1px solid var(--border);
   background:#0f0f0f;
   color:var(--text);
   font-size:16px;
+  min-height: 44px;
+  resize: none;
+  overflow-y: auto;
+  font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
 }
 #code-btn{
   background:#2a2a2a; color:var(--text); border:1px solid var(--border);
@@ -327,13 +332,9 @@ body.collapsed #layout{ grid-template-columns: 0 1fr; }
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px;
+  resize: none;
 }
-
-/* Área de código con tamaño cómodo */
-.modal-body textarea{
-  height: 40vh;
-  resize: vertical;
-}
+.modal-body textarea{ height: 40vh; }
 
 /* Botones */
 .modal-close{
@@ -344,6 +345,7 @@ body.collapsed #layout{ grid-template-columns: 0 1fr; }
   padding: 6px 10px;
   cursor: pointer;
 }
+.modal-close:hover{ background: #3b3b3b; }
 .modal .primary{
   background: var(--primary);
   border: none;
@@ -352,6 +354,51 @@ body.collapsed #layout{ grid-template-columns: 0 1fr; }
   padding: 8px 12px;
   cursor: pointer;
 }
+.modal .primary:hover{ background: #c875ff; }
+
+/* ===== Toasts ===== */
+#toast-container{
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 10000;
+  display: grid;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast{
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 260px;
+  max-width: min(92vw, 420px);
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #1b1b1b;
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  animation: toast-in .18s ease-out;
+}
+.toast .toast-close{
+  background: transparent;
+  color: #fff;
+  border: 0;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: .8;
+}
+.toast.info   { border-color: #5aa7ff; }
+.toast.success{ border-color: #4caf50; }
+.toast.warn   { border-color: #ffb74d; }
+.toast.error  { border-color: #ef5350; }
+
+@keyframes toast-in { from { transform: translateY(8px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+@keyframes toast-out{ to   { transform: translateY(8px); opacity: 0 } }
+
 
 /* Evita que el fondo se mueva cuando el modal está abierto */
 body.modal-open{ overflow: hidden; }

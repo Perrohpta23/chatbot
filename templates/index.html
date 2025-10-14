@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0", view-fit="cover"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" view-fit="cover"/>
   <title>Void IA</title>
 
   <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
@@ -75,10 +75,9 @@
           <!-- Spacer para que el input no tape el final (altura se ajusta vía JS) -->
           <div id="bottom-spacer"></div>
         </div>
-
         <div id="input-area">
-          <input type="text" id="user-input" placeholder="Pregunta lo que quieras" autocomplete="off">
-          <button id="code-btn" title="Insertar código" type="button">{ }</button>
+          <textarea id="user-input" placeholder="Pregunta lo que quieras" autocomplete="off"></textarea>
+          <button id="code-btn" title="Insertar código" type="button"><b>{ }</b></button>
           <button id="send-btn" title="Enviar" type="button">
             <svg width="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
                  id="send-alt" class="icon glyph" fill="#ffffff" aria-hidden="true">
@@ -119,6 +118,26 @@
     </div>
   </div>
 
+  <!-- Toasts (avisos flotantes) -->
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Modal genérico de confirmación / aviso -->
+  <div id="dialog-modal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card">
+      <header class="modal-header">
+        <h3 id="dialog-title">Confirmar</h3>
+        <button class="modal-close" id="dialog-close">×</button>
+      </header>
+      <div class="modal-body">
+        <p id="dialog-message">¿Seguro?</p>
+      </div>
+      <footer class="modal-footer">
+        <button id="dialog-cancel" class="modal-close">Cancelar</button>
+        <button id="dialog-ok" class="primary">Aceptar</button>
+      </footer>
+    </div>
+  </div>
+
   <script>
     // ====== refs ======
     const chatBox     = document.getElementById("chat-box");
@@ -139,13 +158,173 @@
     const codeText    = document.getElementById('code-text');
     const codeFilename= document.getElementById('code-filename');
 
+    /* ========= TOASTS ========= */
+    const toastBox = document.getElementById('toast-container');
+
+    /** Muestra un toast.
+    * @param {string} message
+    * @param {'info'|'success'|'warn'|'error'} type
+    * @param {number} ms
+    */
+
+    function toast(message, type='info', ms=3500){
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.innerHTML = `
+        <span style="opacity:.9">${message}</span>
+        <button class="toast-close" title="Cerrar">×</button>
+      `;
+      toastBox.appendChild(el);
+
+      const close = () => {
+        el.style.animation = 'toast-out .15s ease-in forwards';
+        setTimeout(() => el.remove(), 160);
+      };
+      el.querySelector('.toast-close').onclick = close;
+      setTimeout(close, ms);
+    }
+
+    /* ========= DIALOG GENÉRICO ========= */
+    const dlg = {
+      root:  document.getElementById('dialog-modal'),
+      title: document.getElementById('dialog-title'),
+      msg:   document.getElementById('dialog-message'),
+      ok:    document.getElementById('dialog-ok'),
+      cancel:document.getElementById('dialog-cancel'),
+      x:     document.getElementById('dialog-close'),
+    };
+
+    function openDialog()  { dlg.root.classList.remove('hidden'); document.body.classList.add('modal-open'); }
+    function closeDialog() { dlg.root.classList.add('hidden');    document.body.classList.remove('modal-open'); }
+
+    /** Pregunta con modal. Devuelve Promise<boolean> */
+    function askConfirm({ title='Confirmar', message='¿Seguro?', okText='Aceptar', cancelText='Cancelar'}={}){
+      dlg.title.textContent = title;
+      dlg.msg.textContent = message;
+      dlg.ok.textContent = okText;
+      dlg.cancel.textContent = cancelText;
+
+      return new Promise(resolve => {
+        const onOk = () => { cleanup(); resolve(true);  };
+        const onCancel = () => { cleanup(); resolve(false); };
+
+        function cleanup(){
+          dlg.ok.removeEventListener('click', onOk);
+          dlg.cancel.removeEventListener('click', onCancel);
+          dlg.x.removeEventListener('click', onCancel);
+          dlg.root.removeEventListener('click', onBackdrop);
+          closeDialog();
+        }
+        function onBackdrop(e){ if (e.target === dlg.root) onCancel(); }
+
+        dlg.ok.addEventListener('click', onOk);
+        dlg.cancel.addEventListener('click', onCancel);
+        dlg.x.addEventListener('click', onCancel);
+        dlg.root.addEventListener('click', onBackdrop);
+
+        openDialog();
+      });
+    }
+
+    /* ========= PROMPT (input en modal) ========= */
+    async function uiPrompt({
+      title = "Ingrese un valor",
+      label = "Valor",
+      value = "",
+      okText = "Aceptar",
+      cancelText = "Cancelar",
+      placeholder = ""
+    } = {}) {
+      // crear modal efímero
+      const root = document.createElement('div');
+      root.className = 'modal';
+      root.innerHTML = `
+        <div class="modal-card" role="dialog" aria-modal="true">
+          <header class="modal-header">
+            <h3>${title}</h3>
+            <button class="modal-close" data-x>×</button>
+          </header>
+          <div class="modal-body">
+            <label style="display:block;margin-bottom:6px;">${label}</label>
+            <input type="text" class="prompt-input"
+                  style="width:100%;background:#0f0f0f;color:#fff;border:1px solid var(--border);border-radius:8px;padding:8px;"
+                  value="${value.replace(/"/g,'&quot;')}"
+                  placeholder="${placeholder.replace(/"/g,'&quot;')}">
+          </div>
+          <footer class="modal-footer">
+            <button data-cancel class="modal-close">${cancelText}</button>
+            <button data-ok class="primary">${okText}</button>
+          </footer>
+        </div>
+      `;
+
+      // montar
+      document.body.appendChild(root);
+      document.body.classList.add('modal-open');
+      const inputEl = root.querySelector('.prompt-input');
+      inputEl.focus();
+      inputEl.select();
+
+      return new Promise(resolve => {
+        const cleanup = (val=null) => {
+          document.body.classList.remove('modal-open');
+          root.remove();
+          resolve(val);
+        };
+        const onOk = () => {
+          const v = inputEl.value.trim();
+          cleanup(v || "");
+        };
+        const onCancel = () => cleanup(null);
+        const onBackdrop = e => { if (e.target === root) onCancel(); };
+        const onKey = e => {
+          if (e.key === 'Enter') onOk();
+          if (e.key === 'Escape') onCancel();
+        };
+
+        root.addEventListener('click', onBackdrop);
+        root.querySelector('[data-ok]').addEventListener('click', onOk);
+        root.querySelector('[data-cancel]').addEventListener('click', onCancel);
+        root.querySelector('[data-x]').addEventListener('click', onCancel);
+        root.addEventListener('keydown', onKey, true);
+      });
+    }
+
+    // Enlaza eventos al textarea
+    const TA_MAX_LINES = 9;
+
     const COLLAPSE_BP = 1100;
     let currentConversationId = null;
+
+    // Auto-resize del textarea hasta 6 líneas
+    function fitTextareaToContent(el, maxLines = 9){
+      if (!el) return;
+      const cs = getComputedStyle(el);
+      const lineH = parseFloat(cs.lineHeight) || 20;
+      const vPad  = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      const maxH  = lineH * maxLines + vPad;
+
+      el.style.maxHeight = `${maxH}px`;
+
+      // Resetear para medir correctamente el scrollHeight
+      el.style.height = 'auto';
+      const needed = Math.min(el.scrollHeight, maxH);
+      el.style.height = needed + 'px';
+    }
+
+    function handleTextareaInput(){
+      fitTextareaToContent(input, TA_MAX_LINES);
+      // El input cambia de alto, así que actualizamos el composer
+      syncComposerPadding();
+    }
+
+    fitTextareaToContent(input, TA_MAX_LINES);
+    input.addEventListener('input', handleTextareaInput);
+    input.addEventListener('paste', () => setTimeout(handleTextareaInput, 0)); // después de pegar
 
     function scrollToBottomSmooth() {
       chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
     }
-
 
     // ====== helpers placeholder ======
     function updateChatEmpty(){
@@ -225,6 +404,9 @@
       const h = Math.ceil(inputArea?.getBoundingClientRect().height || 64);
       document.documentElement.style.setProperty('--composer-h', h+'px');
       if (spacer) spacer.style.height = `calc(${h}px + env(safe-area-inset-bottom) + 12px)`;
+      // si estás cerca del fondo, baja
+      const nearBottom = (chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight) < 80;
+      if (nearBottom) chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
       autoScroll(true);
     }
     new ResizeObserver(syncComposerPadding).observe(inputArea);
@@ -271,7 +453,7 @@
       const item = e.target.closest('.conv'); if (!item) return;
       const id = item.dataset.id;
       const act = e.target.closest('[data-action]')?.dataset.action;
-
+    
       if (!act){
         currentConversationId = id;
         document.querySelectorAll('.conv').forEach(x => x.classList.toggle('active', x===item));
@@ -279,24 +461,52 @@
         return;
       }
       if (act === 'delete'){
-        if (!confirm('¿Borrar esta conversación?')) return;
-        await fetch(`/conversations/${id}`, { method:'DELETE' });
-        if (currentConversationId === id){
-          currentConversationId = null;
-          clearChat();   // muestra placeholder otra vez
+        const ok = await askConfirm({
+          title: 'Borrar chat',
+          message: 'Esto eliminará todos los mensajes de esta conversación. ¿Continuar?',
+          okText: 'Sí, borrar',
+          cancelText: 'Cancelar'
+        });
+        if (!ok) return;
+      
+        const res = await fetch(`/conversations/${id}`, { method:'DELETE' });
+        if (res.ok){
+          if (currentConversationId === id){
+            currentConversationId = null;
+            clearChat();
+          }
+          await loadConversations();
+          toast('Chat eliminado', 'success');
+        } else {
+          toast('No se pudo eliminar el chat', 'error');
         }
-        await loadConversations();
         return;
       }
-      if (act === 'rename'){
+      if (act === 'rename') {
         const actual = item.querySelector('.conv-title').textContent.trim();
-        const nuevo = prompt('Nuevo título:', actual);
-        if (!nuevo?.trim()) return;
-        await fetch(`/conversations/${id}`, {
-          method:'PATCH', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ title: nuevo.trim() })
+
+        // usa el modal bonito, no prompt()
+        const nuevo = await uiPrompt({
+          title: "Renombrar chat",
+          label: "Nuevo título",
+          value: actual,
+          okText: "Aceptar"
         });
+
+        if (!nuevo) return;
+
+        // PATCH al backend
+        await fetch(`/conversations/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: nuevo })
+        });
+
+        // refresca y deja marcado el actual
         await loadConversations();
+        const el = [...document.querySelectorAll('.conv')].find(x => x.dataset.id === id);
+        if (el) el.classList.add('active');
+        return;
       }
     });
 
@@ -334,6 +544,8 @@
       // limpiar ya
       input.value = "";
       sendBtn.disabled = true;
+      fitTextareaToContent(input, TA_MAX_LINES);
+      syncComposerPadding();
 
       // UI
       addMessage("user", message);
@@ -376,7 +588,21 @@
 
     // Enter para enviar
     input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
+      // Evita enviar mientras se está componiendo (IME)
+      let composing = false;
+      input.addEventListener('compositionstart', () => composing = true);
+      input.addEventListener('compositionend',   () => composing = false);
+
+      // Enviar SOLO con Ctrl+Enter (Windows/Linux) o ⌘+Enter (Mac)
+      // Enter normal = salto de línea (comportamiento nativo del textarea)
+      input.addEventListener("keydown", (e) => {
+        if (composing) return;
+
+        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          sendBtn.click();
+        }
+      });
     });
 
     // Modal código
@@ -392,8 +618,9 @@
       if(!code) return;
       let header = filename ? `// ${filename}\n` : '';
       if(lang === 'python' || lang === 'bash') header = filename ? `# ${filename}\n` : header;
+      const message = input.value.trim();
       const fenced = "```" + (lang || '') + "\n" + header + code + "\n```";
-      input.value = fenced;
+      input.value = message + "\n" + fenced;
       closeCodeModal();
       sendBtn.click();
     };
